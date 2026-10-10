@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/renderer/src/*"],
+      "@shared/*": ["src/shared/*"]
+    },
+    "outDir": "node_modules/.tsbuild/web"
+  },
+  "include": [
+    "src/renderer/src",
+    "src/renderer/panel-src",
+    "src/renderer/overlay-src",
+    "src/preload/index.d.ts"
+  ]
+}

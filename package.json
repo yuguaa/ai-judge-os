@@ -1,0 +1,82 @@
+{
+  "name": "ai-judge-os",
+  "version": "0.1.0",
+  "description": "五岳阅卷 AI 自动判卷工具：框选答题区与给分板，接入视觉大模型判分，支持手动提交与自动评卷",
+  "main": "out/main/index.js",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json --composite false && tsc --noEmit -p tsconfig.web.json --composite false"
+  },
+  "build": {
+    "appId": "com.ai-judge-os.app",
+    "productName": "ai-judge-os",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "asarUnpack": [
+      "**/node_modules/koffi/**"
+    ],
+    "mac": {
+      "identity": null,
+      "category": "public.app-category.utilities",
+      "target": [
+        "dir",
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "zip",
+        "nsis"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "electron": "^33.2.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^2.3.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "ws": "^8.22.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.2.0",
+    "@radix-ui/react-label": "^2.1.16",
+    "@radix-ui/react-progress": "^1.1.17",
+    "@radix-ui/react-scroll-area": "^1.3.0",
+    "@radix-ui/react-select": "^2.3.8",
+    "@radix-ui/react-slot": "^1.4.0",
+    "@radix-ui/react-switch": "^1.3.8",
+    "@radix-ui/react-tabs": "^1.1.22",
+    "@radix-ui/react-tooltip": "^1.3.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "koffi": "^2.9.0",
+    "lucide-react": "^1.54.0",
+    "openai": "^4.73.0",
+    "sonner": "^2.0.8",
+    "tailwind-merge": "^3.7.0",
+    "zustand": "^5.0.2"
+  },
+  "allowScripts": {
+    "electron@33.4.11": true,
+    "koffi@2.16.3": true,
+    "esbuild@0.21.5": true
+  }
+}
