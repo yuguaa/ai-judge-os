@@ -49,6 +49,9 @@ export const ipc = {
   panelOpen: (name: PanelName): Promise<void> =>
     window.api.invoke('panel:open', name) as Promise<void>,
 
+  windowResize: (collapsed: boolean): Promise<void> =>
+    window.api.invoke('window:resize', collapsed) as Promise<void>,
+
   modelTest: (): Promise<void> => window.api.invoke('model:test') as Promise<void>,
 
   appQuit: (): Promise<void> => window.api.invoke('app:quit') as Promise<void>,

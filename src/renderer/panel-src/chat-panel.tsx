@@ -1,19 +1,19 @@
 /**
  * 对话调试面板：数据源为主进程 chat 历史（拉取 + 广播同步）
+ * 助手回复可一键存入评分规则；截图附件的失败原因明确提示
  */
 import { useEffect, useRef, useState } from 'react'
-import { SendHorizontalIcon } from 'lucide-react'
+import { BookPlusIcon, ImageIcon, MessageSquareIcon, SendHorizontalIcon } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { ipc } from '@/lib/ipc'
-import { useAppStore } from '@/lib/store'
-import type { ChatMessage } from '@shared/types'
+import type { AppConfig, ChatMessage } from '@shared/types'
 
 export function ChatPanel(): JSX.Element {
-  const config = useAppStore((s) => s.config)
-  const saveConfig = useAppStore((s) => s.saveConfig)
+  const [config, setConfig] = useState<AppConfig | null>(null)
   const [chat, setChat] = useState<ChatMessage[]>([])
   const [busy, setBusy] = useState(false)
   const [input, setInput] = useState('')
@@ -23,6 +23,7 @@ export function ChatPanel(): JSX.Element {
 
   useEffect(() => {
     void ipc.getChat().then(setChat)
+    void ipc.getConfig().then(setConfig)
     return ipc.onChatUpdated(setChat)
   }, [])
 
@@ -38,14 +39,14 @@ export function ChatPanel(): JSX.Element {
       try {
         images.push(await ipc.captureRegion('answer'))
       } catch {
-        // 未框选答题区时跳过附加
+        toast.warning('答题区未框选，已跳过该截图')
       }
     }
     if (attachAction) {
       try {
         images.push(await ipc.captureRegion('action'))
       } catch {
-        // 未框选输入框时跳过附加
+        toast.warning('操作区未框选，已跳过该截图')
       }
     }
     const message: ChatMessage = {
@@ -69,101 +70,119 @@ export function ChatPanel(): JSX.Element {
     }
   }
 
-  const appendToRule = (): void => {
-    const text = input.trim()
-    if (!text || !config) return
-    void saveConfig({ ...config, rule: { ruleText: `${config.rule.ruleText}\n${text}` } })
-    setInput('')
+  const appendToRule = (content: string): void => {
+    if (!config) return
+    const next: AppConfig = {
+      ...config,
+      rule: { ruleText: `${config.rule.ruleText}\n${content}`.trim() }
+    }
+    setConfig(next)
+    void ipc.setConfig(next)
+    toast.success('已追加进评分规则')
   }
 
   return (
-    <div className="flex h-full flex-col gap-2.5 p-3">
-      <div className="flex items-center gap-4">
-        <span className="text-xs font-medium text-muted-foreground">
-          带截图与模型确认判分口径，结论可追加进规则
-        </span>
-      </div>
-
-      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pr-1">
+    <div className="flex h-full flex-col gap-3 p-5">
+      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
         {chat.length === 0 && !busy && (
-          <p className="py-10 text-center text-xs text-muted-foreground">
-            先框选答题区，再把当前卷发给模型试判
-          </p>
-        )}
-        {chat.map((m, i) => (
-          <div
-            key={i}
-            className={
-              m.role === 'user'
-                ? 'ml-auto max-w-[85%] rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground'
-                : 'mr-auto max-w-[85%] rounded-lg bg-muted px-3 py-2 text-sm'
-            }
-          >
-            {m.images && (
-              <div className="mb-2 flex flex-wrap gap-1.5">
-                {m.images.map((src, j) => (
-                  <img
-                    key={j}
-                    src={src}
-                    alt={`附件${j + 1}`}
-                    className="max-h-24 rounded border object-contain"
-                  />
-                ))}
-              </div>
-            )}
-            <p className="whitespace-pre-wrap">{m.content}</p>
+          <div className="flex flex-1 flex-col items-center justify-center gap-2.5 py-10 text-center">
+            <div className="flex size-12 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.03]">
+              <MessageSquareIcon className="size-5 text-white/35" />
+            </div>
+            <p className="max-w-56 text-xs leading-5 text-muted-foreground">
+              先框选答题区，再把当前卷发给模型试判
+            </p>
           </div>
-        ))}
+        )}
+        {chat.map((m, i) =>
+          m.role === 'user' ? (
+            <div
+              key={i}
+              className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-gradient-to-br from-[#2fc08f] to-[#18815f] px-3.5 py-2.5 text-[13px] leading-5 text-white shadow-[0_4px_14px_rgba(32,196,132,0.22),inset_0_1px_0_rgba(255,255,255,0.18)]"
+            >
+              {m.images && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {m.images.map((src, j) => (
+                    <img
+                      key={j}
+                      src={src}
+                      alt={`附件${j + 1}`}
+                      className="max-h-24 rounded-lg border border-white/15 object-contain"
+                    />
+                  ))}
+                </div>
+              )}
+              <p className="whitespace-pre-wrap">{m.content}</p>
+            </div>
+          ) : (
+            <div
+              key={i}
+              className="mr-auto flex max-w-[85%] flex-col gap-2 rounded-2xl rounded-bl-md border border-white/[0.07] bg-white/[0.035] px-3.5 py-2.5 text-[13px] leading-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+            >
+              <p className="whitespace-pre-wrap">{m.content}</p>
+              <button
+                className="flex items-center gap-1 self-start rounded-md px-1.5 py-0.5 text-[11px] text-emerald-300/80 transition-colors hover:bg-emerald-400/10 hover:text-emerald-300"
+                onClick={() => appendToRule(m.content)}
+              >
+                <BookPlusIcon className="size-3.5" />
+                存入规则
+              </button>
+            </div>
+          )
+        )}
         {busy && (
-          <div className="mr-auto rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-            模型思考中…
+          <div className="mr-auto flex items-center gap-2 rounded-2xl rounded-bl-md border border-white/[0.07] bg-white/[0.035] px-4 py-3">
+            <span className="flex gap-1">
+              <span className="size-1.5 animate-bounce rounded-full bg-white/40 [animation-delay:-0.3s]" />
+              <span className="size-1.5 animate-bounce rounded-full bg-white/40 [animation-delay:-0.15s]" />
+              <span className="size-1.5 animate-bounce rounded-full bg-white/40" />
+            </span>
+            <span className="text-xs text-muted-foreground">模型思考中…</span>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1.5">
-          <Switch id="chat-attach-answer" checked={attachAnswer} onCheckedChange={setAttachAnswer} />
-          <Label htmlFor="chat-attach-answer" className="text-xs">
-            附答题区
-          </Label>
+      <div className="flex shrink-0 flex-col gap-2.5">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <Switch id="chat-attach-answer" checked={attachAnswer} onCheckedChange={setAttachAnswer} />
+            <Label htmlFor="chat-attach-answer" className="flex items-center gap-1 text-xs text-white/60">
+              <ImageIcon className="size-3.5" />
+              附答题区
+            </Label>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Switch id="chat-attach-action" checked={attachAction} onCheckedChange={setAttachAction} />
+            <Label htmlFor="chat-attach-action" className="flex items-center gap-1 text-xs text-white/60">
+              <ImageIcon className="size-3.5" />
+              附操作区
+            </Label>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Switch id="chat-attach-action" checked={attachAction} onCheckedChange={setAttachAction} />
-          <Label htmlFor="chat-attach-action" className="text-xs">
-            附操作区
-          </Label>
-        </div>
-      </div>
 
-      <div className="flex flex-col gap-2">
-        <Textarea
-          rows={3}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="例：58 空学生写的是 legending，按规则应该判对还是判错？"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void send()
-          }}
-        />
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            className="flex-1"
-            disabled={busy || !input.trim()}
-            onClick={() => void send()}
-          >
-            <SendHorizontalIcon data-icon="inline-start" />
-            发送（⌘↩）
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!input.trim() || !config}
-            onClick={appendToRule}
-          >
-            存入规则
-          </Button>
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-1.5 transition-colors focus-within:border-primary/40">
+          <Textarea
+            rows={3}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="例：58 空学生写的是 legending，按规则应该判对还是判错？"
+            className="min-h-0 resize-none border-0 bg-transparent text-[13px] shadow-none focus-visible:ring-0"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void send()
+            }}
+          />
+          <div className="flex items-center justify-between px-1 pb-0.5">
+            <span className="text-[11px] text-muted-foreground/70">⌘ + Enter 发送</span>
+            <Button
+              size="sm"
+              className="h-7 px-3 text-xs"
+              disabled={busy || !input.trim()}
+              onClick={() => void send()}
+            >
+              <SendHorizontalIcon data-icon="inline-start" className="size-3.5" />
+              发送
+            </Button>
+          </div>
         </div>
       </div>
     </div>

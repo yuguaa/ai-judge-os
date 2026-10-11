@@ -1,6 +1,6 @@
 /**
  * 评卷引擎：逐张循环 截图 → 判分 → 提交 的状态机
- * - 手动模式：模型判分推送分数，提交由用户在五岳界面自行完成
+ * - 手动模式：模型判分推送分数，提交由用户在阅卷平台界面自行完成
  * - 自动模式：判分后点击聚焦输入框 → 键入分数 → 校验生效 → 回车提交
  * - 任何可恢复异常（低置信度、键入未生效、等卷超时）进入 paused，用户处理后继续
  */
@@ -59,6 +59,12 @@ export class GradingEngine {
   private setState(state: EngineState, message?: string): void {
     this.state = state
     this.emit({ type: 'state', state, message })
+  }
+
+  /** 进入暂停：同步 paused 字段与 UI 状态，悬挂等待恢复 */
+  private pause(message: string): void {
+    this.paused = true
+    this.setState('paused', message)
   }
 
   private checkAbort(): void {
@@ -164,10 +170,8 @@ export class GradingEngine {
         } catch (e) {
           if (this.abort || e instanceof AbortError) break
           firstPaper = false
-          const message = e instanceof Error ? e.message : String(e)
-          this.emit({ type: 'error', message })
           // 可恢复异常：暂停悬挂，用户处理后 resume 继续等下一张
-          this.setState('paused', message)
+          this.pause(e instanceof Error ? e.message : String(e))
           await this.waitWhilePaused()
         }
       }
@@ -179,15 +183,20 @@ export class GradingEngine {
           : `评卷完成，共 ${this.done} 张`
       )
     } catch (e) {
-      // 兜底：异常退出统一转 paused，保留进度
-      const message = e instanceof Error ? e.message : String(e)
-      this.setState('paused', message)
+      if (e instanceof AbortError) {
+        // 用户主动停止：保留进度，标记已停止
+        this.setState('stopped', `已停止，完成 ${this.done}/${this.total} 张`)
+      } else {
+        // 兜底：异常退出统一转 paused，保留进度
+        this.pause(e instanceof Error ? e.message : String(e))
+      }
     } finally {
       this.running = false
     }
   }
 
-  /** 轮询答题区：像素变化后连续稳定帧视为新卷就绪；超时转可恢复异常 */
+  /** 轮询答题区：像素变化后连续稳定帧视为新卷就绪；超时转可恢复异常
+   * 暂停期间冻结基线：恢复后与暂停前画面对比，用户处理或翻页已完成时同样生效 */
   private async waitForNewPaper(region: Region): Promise<void> {
     const baseline = await captureRegionBitmap(region)
     let prev = baseline.buffer
@@ -196,9 +205,9 @@ export class GradingEngine {
     let activeMs = 0
     for (;;) {
       this.checkAbort()
-      const pausedStart = this.paused
-      if (pausedStart) {
+      if (this.paused) {
         await sleep(200)
+        activeMs = 0
         continue
       }
       const t0 = Date.now()
@@ -219,7 +228,7 @@ export class GradingEngine {
         stableFrames = 0
       }
       if (activeMs > NEW_PAPER_TIMEOUT) {
-        throw new EnginePauseError('等待新卷超时（30 秒），请检查五岳界面是否已加载下一份')
+        throw new EnginePauseError('等待新卷超时（30 秒），请检查阅卷平台界面是否已加载下一份')
       }
     }
   }
@@ -259,7 +268,7 @@ export class GradingEngine {
 
     const after = await captureRegionBitmap(action)
     if (diffRatio(before.buffer, after.buffer) < TYPE_EFFECT_THRESHOLD) {
-      throw new EnginePauseError('操作未生效（操作区画面无变化），请检查五岳窗口是否被遮挡或失焦')
+      throw new EnginePauseError('操作未生效（操作区画面无变化），请检查阅卷平台窗口是否被遮挡或失焦')
     }
   }
 }

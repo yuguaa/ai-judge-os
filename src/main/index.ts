@@ -21,15 +21,15 @@ let mainWindow: BrowserWindow | null = null
 let engine: GradingEngine | null = null
 
 function createMainWindow(): void {
-  // HUD 窗口：条在底部，上方空间给 toast / tooltip 弹出（OpenScreen 同款结构）
+  // HUD 窗口：左侧垂直折叠菜单栏（Claude.ai 风格），右侧留 toast 弹出区
   const workArea = screen.getPrimaryDisplay().workArea
-  const barWidth = 560
-  const barHeight = 176
+  const winWidth = 460
+  const winHeight = 580
   mainWindow = new BrowserWindow({
-    width: barWidth,
-    height: barHeight,
-    x: workArea.x + Math.round((workArea.width - barWidth) / 2),
-    y: workArea.y + workArea.height - barHeight - 12,
+    width: winWidth,
+    height: winHeight,
+    x: workArea.x + 16,
+    y: workArea.y + Math.round((workArea.height - winHeight) / 2),
     frame: false,
     transparent: true,
     hasShadow: false,
@@ -123,6 +123,13 @@ function registerIpc(): void {
   })
 
   ipcMain.handle('panel:open', (_e, name: string) => openPanel(name))
+
+  // 菜单栏折叠 / 展开时同步调整窗口宽度（保持位置与高度）
+  ipcMain.handle('window:resize', (_e, collapsed: boolean) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    const [x, y] = mainWindow.getPosition()
+    mainWindow.setBounds({ x, y, width: collapsed ? 300 : 460, height: 580 })
+  })
 
   ipcMain.handle('model:test', () => testModel(getConfig().model))
 

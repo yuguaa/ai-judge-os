@@ -152,3 +152,9 @@ vite.config.ts.timestamp-*
 .run/
 *.swift
 .DS_Store
+
+# 渲染层调试 dev server 日志
+scripts/vite.log
+
+# 引擎测试编译产物与临时 userData
+scripts/out/

@@ -15,8 +15,8 @@ const STYLES: Record<string, { color: string; label: string }> = {
 export function showRegionFrame(kind: string, region: Region): void {
   destroyFrame(kind)
   const style = STYLES[kind] ?? { color: '#3b82f6', label: kind }
-  const topPad = 24
-  const sidePad = 3
+  const topPad = 30
+  const sidePad = 4
   const win = new BrowserWindow({
     x: region.x - sidePad,
     y: region.y - topPad,
@@ -40,10 +40,15 @@ export function showRegionFrame(kind: string, region: Region): void {
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>
     html,body{margin:0;background:transparent;overflow:hidden}
     .frame{position:absolute;left:${sidePad}px;top:${topPad}px;width:${region.width}px;height:${region.height}px;
-      border:2px solid ${style.color};border-radius:4px;box-sizing:border-box;
-      box-shadow:0 0 0 1px rgba(0,0,0,.25)}
-    .tag{position:absolute;left:${sidePad}px;top:2px;background:${style.color};color:#fff;
-      font:11px -apple-system,'PingFang SC',sans-serif;line-height:16px;padding:1px 8px;border-radius:4px}
+      border:1.5px solid ${style.color};border-radius:6px;box-sizing:border-box;
+      box-shadow:0 0 0 1px rgba(0,0,0,0.28),0 0 16px ${style.color}55,inset 0 0 16px ${style.color}1f}
+    .tag{position:absolute;left:${sidePad}px;top:2px;display:flex;align-items:center;gap:6px;
+      background:linear-gradient(180deg,${style.color},${style.color}dd);color:#fff;
+      font:600 11px -apple-system,'PingFang SC',sans-serif;line-height:18px;
+      padding:1px 10px 1px 8px;border-radius:6px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.35)}
+    .tag::before{content:'';width:5px;height:5px;border-radius:50%;
+      background:rgba(255,255,255,0.92);box-shadow:0 0 6px rgba(255,255,255,0.8)}
   </style></head><body>
     <div class="frame"></div><div class="tag">${style.label}</div>
   </body></html>`

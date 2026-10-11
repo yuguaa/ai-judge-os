@@ -93,7 +93,6 @@ export type EngineEvent =
   | { type: 'state'; state: EngineState; message?: string }
   | { type: 'progress'; done: number; total: number }
   | { type: 'judged'; record: JudgeRecord }
-  | { type: 'error'; message: string }
 
 /** 聊天消息（渲染层 → 主进程 → 模型） */
 export interface ChatMessage {

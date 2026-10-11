@@ -28,7 +28,6 @@ const MOUSEEVENTF_LEFTDOWN = 0x0002
 const MOUSEEVENTF_LEFTUP = 0x0004
 const KEYEVENTF_KEYUP = 0x0002
 const VK_RETURN = 0x0d
-const VK_BACK = 0x08
 const VK_OEM_PERIOD = 0xbe
 
 interface CgLib {
@@ -204,15 +203,4 @@ export function checkPermissions(): PermissionStatus {
     screenCapture: preflightScreen(),
     accessibility: axTrusted()
   }
-}
-
-/** 退格键（预留：键入校验失败时清空输入框） */
-export async function pressBackspace(): Promise<void> {
-  if (isMac) {
-    // macOS delete keycode = 51
-    await tapKeyMac(51)
-  } else if (isWin) {
-    await tapVkWin(VK_BACK)
-  }
-  await sleep(40)
 }

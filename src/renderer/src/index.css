@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 5.5%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%;
+    --background: 240 8% 4%;
+    --foreground: 210 20% 96%;
+    --card: 240 7% 7%;
+    --card-foreground: 210 20% 96%;
+    --popover: 240 8% 5%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 154 55% 46%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 50.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 217 91% 60%;
-    --radius: 0.6rem;
+    --secondary: 240 5% 13%;
+    --secondary-foreground: 210 15% 92%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 6% 60%;
+    --accent: 240 5% 14%;
+    --accent-foreground: 210 15% 94%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 5% 15%;
+    --input: 240 5% 16%;
+    --ring: 154 55% 46%;
+    --radius: 0.75rem;
   }
 
   * {
@@ -31,12 +31,124 @@
   }
 
   body {
-    @apply text-foreground;
+    @apply text-foreground antialiased;
     background: transparent;
     font-family:
       -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue',
-      sans-serif;
+      'Segoe UI', sans-serif;
+    font-feature-settings: 'tnum' 0;
     user-select: none;
     overflow: hidden;
+  }
+
+  ::selection {
+    background: hsl(154 55% 46% / 0.35);
+  }
+
+  /* 面板窗口通用滚动条：细窄、深色、悬浮提亮 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(240 5% 24%);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(240 5% 34%);
+    background-clip: content-box;
+    border: 2px solid transparent;
+  }
+}
+
+@layer utilities {
+  /* 数字统一等宽，避免跳动 */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 玻璃面板：深色渐变玻璃 + 顶部高光 */
+  .glass {
+    background: linear-gradient(
+      180deg,
+      hsl(240 7% 11% / 0.92),
+      hsl(240 8% 6% / 0.94)
+    );
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.06),
+      0 1px 2px hsl(0 0% 0% / 0.3);
+  }
+
+  /* 面板窗口氛围底：顶部两团低透明光晕 */
+  .panel-aura {
+    background:
+      radial-gradient(
+        120% 55% at 50% -12%,
+        hsl(154 55% 42% / 0.14),
+        transparent 62%
+      ),
+      radial-gradient(
+        90% 42% at 88% -8%,
+        hsl(262 60% 52% / 0.1),
+        transparent 60%
+      ),
+      linear-gradient(180deg, hsl(240 8% 5.5%), hsl(240 8% 3.6%));
+  }
+
+  /* HUD 出现动画：控制条自底部滑入并淡入 */
+  .animate-hud-in {
+    animation: hud-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* 面板内容淡入上移 */
+  .animate-panel-in {
+    animation: panel-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* 状态灯光晕呼吸 */
+  .animate-glow {
+    animation: glow 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes hud-in {
+  /* 携带 translateY(-50%)：与 Tailwind 的 -translate-y-1/2 相同，避免动画 fill-mode 覆盖居中位移 */
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
   }
 }

@@ -17,6 +17,7 @@ const INVOKE_CHANNELS = new Set([
   'chat:get',
   'chat:send',
   'panel:open',
+  'window:resize',
   'model:test',
   'app:quit'
 ])
@@ -24,6 +25,8 @@ const INVOKE_CHANNELS = new Set([
 const PUSH_CHANNELS = new Set(['engine:event', 'chat:updated'])
 
 const api = {
+  /** 运行平台：渲染层据此适配 macOS 红绿灯避让等布局 */
+  platform: process.platform,
   invoke: (channel: string, payload?: unknown): Promise<unknown> => {
     if (!INVOKE_CHANNELS.has(channel)) {
       return Promise.reject(new Error(`未授权的 IPC 通道：${channel}`))

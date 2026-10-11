@@ -1,7 +1,7 @@
 {
   "name": "ai-judge-os",
   "version": "0.1.0",
-  "description": "五岳阅卷 AI 自动判卷工具：框选答题区与给分板，接入视觉大模型判分，支持手动提交与自动评卷",
+  "description": "阅卷平台 AI 自动判卷工具：框选答题区与给分板，接入视觉大模型判分，支持手动提交与自动评卷",
   "main": "out/main/index.js",
   "private": true,
   "scripts": {
@@ -10,7 +10,8 @@
     "start": "electron-vite preview",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json --composite false && tsc --noEmit -p tsconfig.web.json --composite false"
+    "typecheck": "tsc --noEmit -p tsconfig.node.json --composite false && tsc --noEmit -p tsconfig.web.json --composite false",
+    "test:engine": "esbuild scripts/engine-smoke.ts --bundle --platform=node --format=cjs --packages=external --outfile=scripts/out/engine-smoke.cjs && esbuild scripts/test-preload.ts --bundle --platform=node --format=cjs --packages=external --outfile=scripts/out/test-preload.cjs && electron scripts/out/engine-smoke.cjs"
   },
   "build": {
     "appId": "com.ai-judge-os.app",
